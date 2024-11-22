@@ -52,16 +52,17 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
         content={"detail": "Database error occurred"}
     )
 
-# Health Check
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
 
 # Include Routers
 app.include_router(
     api_router,
     prefix=settings.API_V1_STR
 )
+
+# Health Check
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn

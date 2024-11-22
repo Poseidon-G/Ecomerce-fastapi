@@ -26,7 +26,7 @@ class User(Base):
     # Profile fields
     first_name = Column(String(50))
     last_name = Column(String(50))
-    phone = Column(String(20), nullable=True) #Add migration to update this field
+    phone = Column(String(20), nullable=True) 
     role = Column(role_type, default=UserRole.CUSTOMER)
     
     # Account status
@@ -74,7 +74,7 @@ class Category(Base):
     description = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     parent_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
-    slug = Column(String(100), nullable=False, unique=True) # Add migration to update this field
+    slug = Column(String(100), nullable=False, unique=True)
     
     # Use string literals for relationships
     products = relationship("Product", back_populates="category")
@@ -91,7 +91,7 @@ class Category(Base):
     def __repr__(self):
         return f"<Category {self.name}>"
     
-class Order(Base): #Add migration to update this field
+class Order(Base):
     __tablename__ = "orders"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -106,7 +106,7 @@ class Order(Base): #Add migration to update this field
     def __repr__(self):
         return f"<Order {self.id}>"
     
-class OrderItem(Base): #Add migration to update this field
+class OrderItem(Base):
     __tablename__ = "order_items"
     id = Column(Integer, primary_key=True, index=True)
     order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
@@ -120,7 +120,7 @@ class OrderItem(Base): #Add migration to update this field
     def __repr__(self):
         return f"<OrderItem {self.id}>"
 
-class Review(Base): #Add migration to update this field
+class Review(Base):
     __tablename__ = "reviews"
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

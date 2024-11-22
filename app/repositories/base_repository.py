@@ -99,3 +99,11 @@ class BaseRepository(Generic[T]):
         except SQLAlchemyError as e:
             await self.db.rollback()
             raise HTTPException(status_code=400, detail=str(e))
+        
+    async def commit(self) -> bool:
+        try:
+            self.db.commit()
+            return True
+        except Exception as e:
+            self.db.rollback()
+            raise e
