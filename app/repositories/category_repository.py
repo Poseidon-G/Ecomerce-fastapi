@@ -6,7 +6,7 @@ from app.repositories.base_repository import BaseRepository
 
 class CategoryRepository(BaseRepository[Category]):
     def __init__(self, db: Session):
-        super().__init__(Category, db)
+        super().__init__(db)
 
     async def get_by_slug(self, slug: str) -> Optional[Category]:
         """Get category by slug."""

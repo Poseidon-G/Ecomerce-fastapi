@@ -10,7 +10,7 @@ from app.database.base import Base
 
 class Base(Base):
     __abstract__ = True
-    reated_at = Column(
+    created_at = Column(
         TIMESTAMP(timezone=True),
         nullable=False,
         default=lambda: datetime.now(timezone.utc)

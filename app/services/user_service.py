@@ -4,15 +4,25 @@ from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPasswordUpdate
 from app.models.model import User
 from sqlalchemy.orm import Session
+from app.utils.auth import auth_utils
 
 
 class UserService:
     def __init__(self, db: Session):
         self.repository = UserRepository(db)
+        self.auth_utils = auth_utils
 
     async def create_user(self, user_data: UserCreate) -> User:
         """Create a new user."""
-        return await self.repository.create(user_data.model_dump())
+            
+        object_dump = user_data.model_dump()
+        object_dump["password_hash"] = self.auth_utils.get_password_hash(user_data.password)
+        object_dump["role"] = user_data.role.value
+        #remove password from object_dump
+        del object_dump["password"]
+
+        print("object_dump", object_dump)
+        return await self.repository.create(object_dump)
 
     async def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
         """Get all users."""
@@ -55,7 +65,9 @@ class UserService:
 
         if not user.check_password(password_data.old_password):
             raise HTTPException(status_code=400, detail="Invalid password")
-        user.set_password(password_data.new_password)
+
+        new_password_hash = self.auth_utils.get_password_hash(password_data.new_password)
+        user.password_hash = new_password_hash
         return await self.repository.commit()
         
 

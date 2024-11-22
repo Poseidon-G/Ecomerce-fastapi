@@ -4,6 +4,7 @@ from app.repositories.category_repository import CategoryRepository
 from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
 from app.models.model import Category
 from sqlalchemy.orm import Session
+from app.utils.text import slugify
 
 class CategoryService:
     def __init__(self, db: Session):
@@ -15,8 +16,11 @@ class CategoryService:
             parent = await self.repository.get(category_data.parent_id)
             if not parent:
                 raise HTTPException(status_code=404, detail="Parent category not found")
-        
-        return await self.repository.create(category_data.model_dump())
+
+        category_dump = category_data.model_dump()
+        print("category_name", category_data.name)
+        category_dump["slug"] = slugify(category_data.name)
+        return await self.repository.create(category_dump)
 
     async def get_category(self, category_id: int) -> Optional[Category]:
         """Get category by ID."""

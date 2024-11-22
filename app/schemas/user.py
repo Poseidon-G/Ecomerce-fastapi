@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class UserBase(BaseModel):
     email: str = Field(..., min_length=2, max_length=100, description="User email")
-    password: str = Field(..., min_length=6, description="User password")
     first_name: str = Field(..., min_length=2, max_length=50, description="User first name")
     last_name: str = Field(..., min_length=2, max_length=50, description="User last name")
     phone: Optional[str] = Field(None, max_length=20, description="User phone number")
@@ -15,7 +14,8 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    pass
+    password: str = Field(..., min_length=6, description="User password")
+    
 
 class UserUpdate(BaseModel):
     email: Optional[str] = Field(None, min_length=2, max_length=100, description="User email")
@@ -27,8 +27,7 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-    created_at: datetime
-    updated_at: str
+    updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
 

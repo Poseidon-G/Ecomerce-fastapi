@@ -34,13 +34,8 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     last_login = Column(DateTime, nullable=True)
     
-    # Password handling
-    def set_password(self, password: str):
-        self.password_hash = get_password_hash(password)
-    
-    def verify_password(self, password: str) -> bool:
-        return verify_password(password, self.password_hash)
-    
+    #Relationships
+    orders = relationship("Order", back_populates="user")
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
@@ -84,10 +79,6 @@ class Category(Base):
         backref="children"
     )
     
-    @hybrid_property
-    def slug(self):
-        return slugify(self.name)
-    
     def __repr__(self):
         return f"<Category {self.name}>"
     
@@ -114,7 +105,7 @@ class OrderItem(Base):
     quantity = Column(Integer, nullable=False)
     price = Column(Float, nullable=False)
     
-    order = relationship("Order", back_populates="order_items")
+    order = relationship("Order", back_populates="items")
     product = relationship("Product", back_populates="order_items")
     
     def __repr__(self):
