@@ -1,6 +1,7 @@
 from typing import TypeVar, Generic, Dict, Any, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, asc, desc, func
+from sqlalchemy import select, asc, desc, func, String, Text, or_
+import sqlalchemy as sa
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi import HTTPException
 from app.models.base import Base
@@ -107,3 +108,55 @@ class BaseRepository(Generic[T]):
         except Exception as e:
             self.db.rollback()
             raise e
+        
+    async def search(
+        self,
+        search_term: str,
+        search_fields: List[str],
+        filters: Optional[Dict[str, Any]] = None,
+        sort_by: Optional[str] = None,
+        order: str = "asc",
+        skip: int = 0,
+        limit: Optional[int] = None
+    ) -> List[T]:
+        """
+        Search across multiple columns with case-insensitive partial matching
+        """
+        stmt = select(self.model)
+
+        # Build search conditions
+        search_conditions = []
+        for field in search_fields:
+            if hasattr(self.model, field):
+                column = getattr(self.model, field)
+                if isinstance(column.type, (sa.String, sa.Text)):
+                    search_conditions.append(
+                        column.ilike(f"%{search_term}%")
+                    )
+
+        if search_conditions:
+            stmt = stmt.where(sa.or_(*search_conditions))
+
+        # Apply additional filters
+        if filters:
+            for key, value in filters.items():
+                if hasattr(self.model, key):
+                    column = getattr(self.model, key)
+                    if isinstance(value, list):
+                        stmt = stmt.where(column.in_(value))
+                    else:
+                        stmt = stmt.where(column == value)
+
+        # Apply sorting
+        if sort_by and hasattr(self.model, sort_by):
+            sort_column = getattr(self.model, sort_by)
+            stmt = stmt.order_by(desc(sort_column) if order == "desc" else asc(sort_column))
+
+        # Apply pagination
+        if skip:
+            stmt = stmt.offset(skip)
+        if limit:
+            stmt = stmt.limit(limit)
+
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
