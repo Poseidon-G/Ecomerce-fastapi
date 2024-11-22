@@ -1,18 +1,24 @@
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional, Union, Dict, Any, Set
+from typing import Annotated, List, Optional, Union, Dict, Any, Set
+from fastapi.security import HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from fastapi import HTTPException, status, Request
+from fastapi import Depends, HTTPException, status, Request
 from pydantic import ValidationError
 from app.core.config import settings
+from app.repositories.user_repository import UserRepository
 from app.schemas.auth import TokenPayload
 from collections import defaultdict
 import time
+from sqlalchemy.orm import Session
+from app.database.connection import get_db
+from app.models.model import User
 
+bearerSchema = HTTPBearer()
 class AuthUtils:
     """Authentication utility class for token management and password hashing."""
     
-    def __init__(self):
+    def __init__(self, db: Session = Depends(get_db)):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.algorithm = settings.ALGORITHM
         self.secret_key = settings.SECRET_KEY
@@ -23,6 +29,7 @@ class AuthUtils:
         self.rate_limit = 100  # requests per minute
         self._clean_blacklist_interval = 3600  # 1 hour
         self._last_cleanup = time.time()
+        self.user_repository = UserRepository(db)
 
     def _clean_blacklist(self) -> None:
         """Remove expired tokens from blacklist."""
@@ -103,20 +110,24 @@ class AuthUtils:
         """
         try:
             self._clean_blacklist()
-            
-            if token in self.token_blacklist:
+
+            token_str = token.credentials if hasattr(token, 'credentials') else token
+            print("token_str", token_str)
+            if token_str in self.token_blacklist:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Token has been blacklisted"
                 )
-                
+            
             payload = jwt.decode(
-                token,
+                token_str,
                 self.secret_key,
                 algorithms=[self.algorithm]
             )
             
             token_data = TokenPayload(**payload)
+
+            print("token_data", token_data)
             
             if verify_type and payload.get("type") != verify_type:
                 raise HTTPException(
@@ -175,7 +186,64 @@ class AuthUtils:
             "Content-Security-Policy": "default-src 'self'",
             "Referrer-Policy": "strict-origin-when-cross-origin",
             "Permissions-Policy": "geolocation=(), microphone=()"
-        }
+        } 
+    async def get_current_user(
+        self,
+        token: Annotated[str, Depends(bearerSchema)],
+        db: Session = Depends(get_db),
+    ) -> User:
+
+        try:
+            # Decode and validate the token
+            payload = self.decode_token(token, verify_type="access")
+            token_data = TokenPayload(**payload)
+            
+            if not token_data.sub:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Could not validate credentials"
+                )
+
+            # Get user from database
+            user_repository = UserRepository(db)
+            user = await user_repository.get_by_field("id", token_data.sub)
+            if not user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User not found"
+                )
+                
+            # Check if user is active
+            if not user.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Inactive user"
+                )
+                    
+            return user
+            
+        except (JWTError, ValidationError) as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Could not validate credentials: {str(e)}"
+            )
+
+    # Helper decorator for role-based access control
+    def require_roles(self, roles: set[str]):
+        """
+        Decorator to require specific roles for endpoint access.
+        
+        Usage:
+            @app.get("/admin")
+            @auth_utils.require_roles({"admin"})
+            async def admin_route(current_user: User = Depends(auth_utils.get_current_user)):
+                return {"message": "Admin only!"}
+        """
+        async def current_user_with_roles(
+            token: Annotated[str, Depends(bearerSchema)]
+        ) -> User:
+            return await self.get_current_user(token, required_roles=roles)
+        return current_user_with_roles
 
 # Create global instance
 auth_utils = AuthUtils()

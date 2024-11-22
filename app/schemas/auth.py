@@ -2,7 +2,13 @@ from pydantic import BaseModel, Field, ConfigDict
 
 
 class TokenPayload(BaseModel):
+    exp: float = None
     sub: str = None
+    type: str = None
+    iat: float = None
+    jti: str = None
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 

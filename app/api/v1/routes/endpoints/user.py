@@ -3,8 +3,10 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
+from app.models.model import User
 from app.services.user_service import UserService
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPasswordUpdate
+from app.utils.auth import auth_utils
 
 router = APIRouter(
     prefix="/users",
@@ -19,10 +21,11 @@ async def get_user_service(db: Session = Depends(get_db)) -> UserService:
     "/",
     response_model=UserResponse,
     status_code=201,
-    description="Create a new user"
+    description="Create a new user",
 )
 async def create_user(
     user: UserCreate,
+    current_user: User = Depends(auth_utils.get_current_user),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.create_user(user)
