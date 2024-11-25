@@ -229,21 +229,17 @@ class AuthUtils:
             )
 
     # Helper decorator for role-based access control
-    def require_roles(self, roles: set[str]):
-        """
-        Decorator to require specific roles for endpoint access.
-        
-        Usage:
-            @app.get("/admin")
-            @auth_utils.require_roles({"admin"})
-            async def admin_route(current_user: User = Depends(auth_utils.get_current_user)):
-                return {"message": "Admin only!"}
-        """
-        async def current_user_with_roles(
-            token: Annotated[str, Depends(bearerSchema)]
+    def require_roles(self, allowed_roles: Set[str]):
+        async def role_checker(
+            current_user: User = Depends(self.get_current_user)
         ) -> User:
-            return await self.get_current_user(token, required_roles=roles)
-        return current_user_with_roles
-
+            if current_user.role not in allowed_roles:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Insufficient permissions"
+                )
+            return current_user
+        return role_checker
+    
 # Create global instance
 auth_utils = AuthUtils()

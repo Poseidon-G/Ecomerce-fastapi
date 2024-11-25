@@ -7,6 +7,7 @@ from app.models.model import User
 from app.services.user_service import UserService
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPasswordUpdate
 from app.utils.auth import auth_utils
+from app.models.model import UserRole
 
 router = APIRouter(
     prefix="/users",
@@ -25,7 +26,7 @@ async def get_user_service(db: Session = Depends(get_db)) -> UserService:
 )
 async def create_user(
     user: UserCreate,
-    current_user: User = Depends(auth_utils.get_current_user),
+    current_user: User = Depends(auth_utils.require_roles([UserRole.ADMIN])),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.create_user(user)

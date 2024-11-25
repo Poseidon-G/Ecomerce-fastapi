@@ -15,3 +15,6 @@
 
 6. Start application
 -  uvicorn app.main:app --reload
+
+7. Access to API documentation swagger
+- Open `http://localhost:8000/docs`
