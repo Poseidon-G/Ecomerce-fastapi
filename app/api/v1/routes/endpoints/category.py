@@ -4,11 +4,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.services.category_service import CategoryService
+from app.schemas.base import PaginatedResponse
 from app.schemas.category import (
     CategoryCreate,
     CategoryUpdate,
     CategoryResponse,
 )
+from app.utils.helpers import paginate, convert_pydantic
 
 router = APIRouter(
     prefix="/categories",
@@ -44,17 +46,19 @@ async def get_category(
 
 @router.get(
     "/",
-    response_model=List[CategoryResponse],
+    response_model=PaginatedResponse[CategoryResponse],
     description="Get all categories with filtering"
 )
 async def get_categories(
-    skip: int = Query(0, ge=0, description="Skip N items"),
-    limit: int = Query(100, ge=1, le=100, description="Limit the results"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(100, ge=1, le=100, description="Page size"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     service: CategoryService = Depends(get_category_service)
-) -> List[CategoryResponse]:
+) -> PaginatedResponse[CategoryResponse]:
     filters = {"is_active": is_active} if is_active is not None else None
-    return await service.get_categories(skip=skip, limit=limit, filters=filters)
+    categories, total = await service.get_categories(page, size, filters)
+
+    return paginate(categories, CategoryResponse, total, page, size)
 
 @router.put(
     "/{category_id}",

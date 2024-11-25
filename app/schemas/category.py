@@ -1,5 +1,6 @@
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
+from app.schemas.base import PaginationMetadata
 
 class CategoryBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100, description="Category name")
@@ -19,4 +20,12 @@ class CategoryUpdate(BaseModel):
 class CategoryResponse(CategoryBase):
     id: int
     slug: str
+    model_config = ConfigDict(from_attributes=True)
+
+    def dict(self, **kwargs):
+        return super().model_dump(**kwargs)
+
+class PaginatedCategoryResponse(BaseModel):
+    data: List[CategoryResponse]
+    metadata: PaginationMetadata
     model_config = ConfigDict(from_attributes=True)

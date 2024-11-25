@@ -79,6 +79,22 @@ class BaseRepository(Generic[T]):
         stmt = await self._build_query(filters, sort_by, order, skip, limit)
         result = await self.db.execute(stmt)
         return result.scalars().all()
+    
+    async def count(
+        self,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> int:
+        stmt = select(func.count()).select_from(self.model)
+        if filters:
+            for key, value in filters.items():
+                if hasattr(self.model, key):
+                    column = getattr(self.model, key)
+                    if isinstance(value, list):
+                        stmt = stmt.where(column.in_(value))
+                    else:
+                        stmt = stmt.where(column == value)
+        result = await self.db.execute(stmt)
+        return result.scalar()
 
     async def update(self, db_obj: T, obj_in: Dict[str, Any]) -> T:
         for key, value in obj_in.items():

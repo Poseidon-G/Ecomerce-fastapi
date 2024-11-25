@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from fastapi import HTTPException
 from app.repositories.category_repository import CategoryRepository
 from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
@@ -38,16 +38,22 @@ class CategoryService:
 
     async def get_categories(
         self,
-        skip: int = 0,
-        limit: int = 100,
+        page: int = 1,
+        size: int = 100,
         filters: Optional[Dict[str, Any]] = None
-    ) -> List[Category]:
+    ) -> Tuple[List[Category], int]:
         """Get all categories with filtering."""
-        return await self.repository.get_all(
+        skip = (page - 1) * size
+        limit = size
+        categories, total = await self.repository.get_all(
             filters=filters,
             skip=skip,
             limit=limit
-        )
+        ), await self.repository.count(filters=filters)
+
+        return categories, total
+
+
 
     async def update_category(
         self,
