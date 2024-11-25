@@ -206,7 +206,11 @@ class AuthUtils:
 
             # Get user from database
             user_repository = UserRepository(db)
-            user = await user_repository.get_by_field("id", token_data.sub)
+            #Convert token_data.sub to int
+            id = int(token_data.sub)
+
+            user = await user_repository.get(id)
+            print("user", user)
             if not user:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,

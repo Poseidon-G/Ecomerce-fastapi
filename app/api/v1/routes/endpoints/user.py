@@ -26,7 +26,7 @@ async def get_user_service(db: Session = Depends(get_db)) -> UserService:
 )
 async def create_user(
     user: UserCreate,
-    current_user: User = Depends(auth_utils.require_roles([UserRole.ADMIN])),
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.create_user(user)
@@ -37,6 +37,7 @@ async def create_user(
     description="Get all users"
 )
 async def get_users(
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     skip: int = Query(0, ge=0, description="Skip N items"),
     limit: int = Query(100, ge=1, le=100, description="Limit the results"),
     service: UserService = Depends(get_user_service)
@@ -50,6 +51,7 @@ async def get_users(
 )
 async def get_user(
     user_id: int,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.get_user(user_id)
@@ -62,6 +64,7 @@ async def get_user(
 async def update_user(
     user_id: int,
     user: UserUpdate,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.update_user(user_id, user)
@@ -73,6 +76,7 @@ async def update_user(
 )
 async def deactivate_user(
     user_id: int,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: UserService = Depends(get_user_service)
 ):
     return await service.deactivate_user(user_id)
@@ -83,6 +87,7 @@ async def deactivate_user(
     description="Get current user profile"
 )
 async def get_current_user(
+    current_user: User = Depends(auth_utils.get_current_user),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.get_current_user()
@@ -95,6 +100,7 @@ async def get_current_user(
 
 async def update_password(
     user: UserPasswordUpdate,
+    current_user: User = Depends(auth_utils.get_current_user),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.update_password(user)
