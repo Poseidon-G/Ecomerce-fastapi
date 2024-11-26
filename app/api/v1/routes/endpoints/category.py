@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
+from app.models.model import User
 from app.services.category_service import CategoryService
 from app.schemas.base import PaginatedResponse
 from app.schemas.category import (
@@ -11,6 +12,7 @@ from app.schemas.category import (
     CategoryResponse,
 )
 from app.utils.helpers import paginate, convert_pydantic
+from app.utils.auth import auth_utils
 
 router = APIRouter(
     prefix="/categories",
@@ -29,6 +31,7 @@ async def get_category_service(db: Session = Depends(get_db)) -> CategoryService
 )
 async def create_category(
     category: CategoryCreate,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: CategoryService = Depends(get_category_service)
 ) -> CategoryResponse:
     return await service.create_category(category)
@@ -40,6 +43,7 @@ async def create_category(
 )
 async def get_category(
     category_id: int,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: CategoryService = Depends(get_category_service)
 ) -> CategoryResponse:
     return await service.get_category(category_id)
@@ -53,6 +57,7 @@ async def get_categories(
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(100, ge=1, le=100, description="Page size"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: CategoryService = Depends(get_category_service)
 ) -> PaginatedResponse[CategoryResponse]:
     filters = {"is_active": is_active} if is_active is not None else None
@@ -68,6 +73,7 @@ async def get_categories(
 async def update_category(
     category_id: int,
     category: CategoryUpdate,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: CategoryService = Depends(get_category_service)
 ) -> CategoryResponse:
     return await service.update_category(category_id, category)
@@ -79,6 +85,7 @@ async def update_category(
 )
 async def delete_category(
     category_id: int,
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: CategoryService = Depends(get_category_service)
 ):
     result = await service.delete_category(category_id)
