@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 from app.repositories.product_repository import ProductRepository
 from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse
@@ -16,16 +16,20 @@ class ProductService:
 
     async def get_products(
         self,
-        skip: int = 0,
-        limit: int = 100,
+        page: int = 1,
+        size: int = 100,
         filters: Optional[Dict[str, Any]] = None
-    ) -> List[Product]:
+    ) -> Tuple[List[Product], int]:
         """Get all products with filtering."""
-        return await self.repository.get_all(
+        skip = (page - 1) * size
+        limit = size
+        products, total = await self.repository.get_all(
             filters=filters,
             skip=skip,
             limit=limit
-        )
+        ), await self.repository.count(filters=filters)
+
+        return products, total
 
     async def get_product(self, product_id: int) -> Optional[Product]:
         """Get product by ID."""

@@ -4,10 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.models.model import User
+from app.schemas.base import PaginatedResponse
 from app.services.user_service import UserService
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPasswordUpdate
 from app.utils.auth import auth_utils
 from app.models.model import UserRole
+from app.utils.helpers import paginate
 
 router = APIRouter(
     prefix="/users",
@@ -38,11 +40,12 @@ async def create_user(
 )
 async def get_users(
     current_user: User = Depends(auth_utils.require_roles(["admin"])),
-    skip: int = Query(0, ge=0, description="Skip N items"),
-    limit: int = Query(100, ge=1, le=100, description="Limit the results"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(100, ge=1, le=100, description="Page size"),
     service: UserService = Depends(get_user_service)
-) -> List[UserResponse]:
-    return await service.get_users(skip=skip, limit=limit)
+) -> PaginatedResponse[UserResponse]:
+    users, total = await service.get_users(page, size)
+    return paginate(users, UserResponse, total, page, size)
 
 @router.get(
     "/{user_id}",
@@ -84,10 +87,10 @@ async def deactivate_user(
 @router.get(
     "/me",
     response_model=UserResponse,
-    description="Get current user profile"
+    description="Get current user profile",
+    dependencies=[Depends(auth_utils.get_current_user)]
 )
 async def get_current_user(
-    current_user: User = Depends(auth_utils.get_current_user),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.get_current_user()
@@ -95,12 +98,12 @@ async def get_current_user(
 @router.put(
     "/me/password",
     response_model=UserResponse,
-    description="Update password"
+    description="Update password",
+    dependencies=[Depends(auth_utils.get_current_user)]
 )
 
 async def update_password(
     user: UserPasswordUpdate,
-    current_user: User = Depends(auth_utils.get_current_user),
     service: UserService = Depends(get_user_service)
 ) -> UserResponse:
     return await service.update_password(user)

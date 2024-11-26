@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserPasswordUpdate
@@ -24,9 +24,22 @@ class UserService:
         print("object_dump", object_dump)
         return await self.repository.create(object_dump)
 
-    async def get_users(self, skip: int = 0, limit: int = 100) -> List[User]:
+    async def get_users(
+        self,
+        page: int = 1,
+        size: int = 100,
+        filters: Optional[Dict[str, Any]] = None
+    ) -> Tuple[List[User], int]:
         """Get all users."""
-        return await self.repository.get_all(skip=skip, limit=limit)
+        skip = (page - 1) * size
+        limit = size
+        users, total = await self.repository.get_all(
+            filters=filters,
+            skip=skip,
+            limit=limit
+        ), await self.repository.count(filters=filters)
+
+        return users, total
 
     async def get_user(self, user_id: int) -> Optional[User]:
         """Get user by ID."""
