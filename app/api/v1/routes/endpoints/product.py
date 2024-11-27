@@ -35,7 +35,7 @@ async def create_product(
 
 @router.get(
     "/",
-    response_model=List[ProductResponse],
+    response_model=PaginatedResponse[ProductResponse],
     description="Get all products with filtering"
 )
 async def get_products(

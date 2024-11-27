@@ -35,13 +35,13 @@ async def create_user(
 
 @router.get(
     "/",
-    response_model=List[UserResponse],
+    response_model=PaginatedResponse[UserResponse],
     description="Get all users"
 )
 async def get_users(
-    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     page: int = Query(1, ge=1, description="Page number"),
     size: int = Query(100, ge=1, le=100, description="Page size"),
+    current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: UserService = Depends(get_user_service)
 ) -> PaginatedResponse[UserResponse]:
     users, total = await service.get_users(page, size)
