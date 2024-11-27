@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     # CORS Settings
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:8000"
 
+
+    #For kafka
+    KAFKA_BOOTSTRAP_SERVERS: str = "localhost:9092"
+    KAFKA_ORDER_TOPIC: str = "ecommerce-orders"
+    KAFKA_GROUP_ID: str = "ecommerce-group"
+    
     @property
     def cors_origins(self) -> List[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
