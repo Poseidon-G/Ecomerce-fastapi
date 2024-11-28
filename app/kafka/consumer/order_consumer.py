@@ -2,7 +2,7 @@ from aiokafka import AIOKafkaConsumer
 import json
 import asyncio
 from app.core.config import settings
-from app.services.order_service import process_order
+from app.services.order.order_service import process_order
 
 class KafkaConsumer:
     def __init__(self):

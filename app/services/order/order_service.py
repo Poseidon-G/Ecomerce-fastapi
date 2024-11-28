@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 from fastapi import HTTPException
 from app.repositories.order_repository import OrderRepository
+from app.repositories.order_item_repository import OrderItemRepository
 from app.schemas.order import OrderCreate, OrderResponse, OrderAdminUpdate
 from app.models.model import Product
 from sqlalchemy.orm import Session
@@ -9,10 +10,19 @@ from sqlalchemy.orm import Session
 class OrderService:
     def __init__(self, db: Session):
         self.repository = OrderRepository(db)
+        self.order_item_repository = OrderItemRepository(db)
 
     async def create_order(self, order_data: OrderCreate) -> OrderResponse:
         """Create a new order."""
-        return await self.repository.create(order_data.model_dump())
+        order = await self.repository.create(order_data.model_dump())
+
+        for item in order_data.items:
+            product = await self.order_item_repository.create(item)
+
+            product = await self.order_item_repository.get(product.id)
+            order.items.append(product)
+
+        return order
     
     async def get_orders(
         self,

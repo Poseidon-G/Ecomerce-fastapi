@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.models.model import User
 from app.schemas.base import PaginatedResponse
-from app.services.order_service import OrderService
+from app.services.order.order_service import OrderService
 from app.schemas.order import OrderCreate, OrderAdminUpdate, OrderResponse
 from app.utils.helpers import paginate
 from app.utils.auth import auth_utils
