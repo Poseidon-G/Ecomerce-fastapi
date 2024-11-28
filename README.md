@@ -18,3 +18,14 @@
 
 7. Access to API documentation swagger
 - Open `http://localhost:8000/docs`
+
+
+# Note if have error in starting 
+1. If get error like that:
+venv/lib/python3.10/site-packages/passlib/handlers/bcrypt.py", line 620, in _load_backend_mixin
+    version = _bcrypt.__about__.__version__
+AttributeError: module 'bcrypt' has no attribute '__about__'
+
+Please change to 
+venv/lib/python3.10/site-packages/passlib/handlers/bcrypt.py line 620
+    version = _bcrypt.__version__
