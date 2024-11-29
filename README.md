@@ -13,6 +13,10 @@
 4. Run migrations
 - alembic upgrade head
 
+5. Run seed data
+- export PYTHONPATH="${PYTHONPATH}:${PWD}"
+- python3 app/cli/seed.py
+
 6. Start application
 -  uvicorn app.main:app --reload
 
