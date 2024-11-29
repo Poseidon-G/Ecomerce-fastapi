@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
-from app.schemas.order_item import OrderItemBase
+from app.schemas.order_item import OrderItemBase, OrderItemResponse
 
 class OrderBase(BaseModel):
     total: float = Field(..., description="Total order amount")
@@ -13,7 +13,6 @@ class OrderCreate(OrderBase):
 class OrderAdminUpdate(BaseModel):
     total: Optional[float] = Field(None, description="Total order amount")
     items: Optional[List[OrderItemBase]] = Field(None, description="Order items")
-    is_active: Optional[bool] = Field(None, description="Order status")
     is_shipped: Optional[bool] = Field(None, description="Order shipped status")
     is_paid: Optional[bool] = Field(None, description="Order paid status")
 
@@ -21,7 +20,7 @@ class OrderAdminUpdate(BaseModel):
 class OrderResponse(OrderBase):
     id: int
     user_id: int
-    is_active: bool
+    items: List[OrderItemResponse]
     is_shipped: bool
     is_paid: bool
     created_at: datetime

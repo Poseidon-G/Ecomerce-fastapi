@@ -69,30 +69,35 @@ class Seeder:
                     name="Laptop",
                     description="A portable computer",
                     price=500.00,
+                    stock=100,
                     category_id=categories[0].id
                 ),
                 ProductCreate(
                     name="T-shirt",
                     description="A casual wear",
                     price=20.00,
+                    stock=200,
                     category_id=categories[1].id
                 ),
                 ProductCreate(
                     name="Python Crash Course",
                     description="A book for beginners",
                     price=30.00,
+                    stock=50,
                     category_id=categories[2].id
                 ),
                 ProductCreate(
                     name="Office Chair",
                     description="A comfortable chair",
                     price=100.00,
+                    stock=20,
                     category_id=categories[3].id
                 ),
                 ProductCreate(
                     name="Rice",
                     description="A staple food",
                     price=5.00,
+                    stock=500,
                     category_id=categories[4].id
                 ),
             ]
@@ -114,6 +119,10 @@ class Seeder:
             # Seed categories
             categories = await self.seed_categories()
             print("✅ Database seeded successfully!")
+
+            # Seed products
+            products = await self.seed_products(categories)
+            print("✅ Products seeded successfully!")
             return True
         except Exception as e:
             print(f"❌ Error seeding database: {str(e)}")

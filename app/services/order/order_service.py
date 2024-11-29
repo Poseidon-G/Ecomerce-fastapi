@@ -12,18 +12,52 @@ class OrderService:
         self.repository = OrderRepository(db)
         self.order_item_repository = OrderItemRepository(db)
 
-    async def create_order(self, order_data: OrderCreate) -> OrderResponse:
+    async def create_order(self, order_data: OrderCreate, user_id: int) -> OrderResponse:
         """Create a new order."""
-        order = await self.repository.create(order_data.model_dump())
+        # Calculate total from items
+        total = sum(item.price * item.quantity for item in order_data.items)
+        
+        # Create order first
+        order_dump = {
+            "user_id": user_id,
+            "total": total,
+            "is_paid": False,
+            "is_shipped": False
+        }
+        
+        order = await self.repository.create(order_dump)
 
+        items = []
+        # Create order items with proper relationships
         for item in order_data.items:
-            product = await self.order_item_repository.create(item)
-
-            product = await self.order_item_repository.get(product.id)
-            order.items.append(product)
-
-        return order
-    
+            order_item_data = {
+                "order_id": order.id,
+                "product_id": item.product_id,
+                "quantity": item.quantity,
+                "price": item.price
+            }
+            order_item = await self.order_item_repository.create(order_item_data)
+            items.append(order_item)
+        
+        order = await self.repository.get(order.id)
+        return {
+                    "id": order.id,
+                    "user_id": order.user_id,
+                    "total": order.total,
+                    "is_paid": order.is_paid,
+                    "is_shipped": order.is_shipped,
+                    "created_at": order.created_at,
+                    "updated_at": order.updated_at,
+                    "items": [{
+                        "id": item.id,
+                        "order_id": item.order_id,
+                        "product_id": item.product_id,
+                        "quantity": item.quantity,
+                        "price": item.price,
+                        "created_at": item.created_at,
+                        "updated_at": item.updated_at
+                    } for item in items]
+                }
     async def get_orders(
         self,
         page: int = 1,

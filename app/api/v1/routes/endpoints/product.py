@@ -39,15 +39,15 @@ async def create_product(
     description="Get all products with filtering"
 )
 async def get_products(
-    skip: int = Query(0, ge=0, description="Skip N items"),
-    limit: int = Query(100, ge=1, le=100, description="Limit the results"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(100, ge=1, le=100, description="Page size"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: ProductService = Depends(get_product_service)
 ) -> PaginatedResponse[ProductResponse]:
     filters = {"is_active": is_active} if is_active is not None else None
-    products, total = await service.get_products(skip, limit, filters)
-    return paginate(products, ProductResponse, total, skip, limit)
+    products, total = await service.get_products(page, size, filters)
+    return paginate(products, ProductResponse, total, page, size)
 
 @router.get(
     "/{product_id}",

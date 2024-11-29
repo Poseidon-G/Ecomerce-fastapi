@@ -26,11 +26,12 @@ async def get_order_service(db: Session = Depends(get_db)) -> OrderService:
     description="Create a new order"
 )
 async def create_order(
-    product: OrderCreate,
+    order: OrderCreate,
     current_user: User = Depends(auth_utils.require_roles(["admin"])),
     service: OrderService = Depends(get_order_service)
 ) -> OrderResponse:
-    return await service.create_order(product)
+    print("order-router", order)
+    return await service.create_order(order, current_user.id)
 
 
 @router.get(
